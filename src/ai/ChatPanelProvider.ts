@@ -4,8 +4,12 @@ import type { CompletedTask } from "../models/CompletedTask.js";
 import { buildChatPanelPrompt } from "../utils/promptBuilder.js";
 import { logger } from "../utils/logger.js";
 
-/** The VS Code command used to open the chat panel with a pre-filled query */
+/** Standard VS Code chat open command */
 const CHAT_OPEN_COMMAND = "workbench.action.chat.open";
+/** Antigravity IDE specific agent prompt command */
+const ANTIGRAVITY_PROMPT_COMMAND = "antigravity.sendPromptToAgentPanel";
+/** Antigravity IDE open agent command */
+const ANTIGRAVITY_OPEN_COMMAND = "antigravity.openAgent";
 
 /**
  * ChatPanelProvider sends the generated prompt directly to the IDE's
@@ -24,9 +28,12 @@ export class ChatPanelProvider implements AIProvider {
   public async isAvailable(): Promise<boolean> {
     try {
       const commands = await vscode.commands.getCommands(true);
-      const available = commands.includes(CHAT_OPEN_COMMAND);
+      const copilotAvailable = commands.includes(CHAT_OPEN_COMMAND);
+      const antigravityAvailable = commands.includes(ANTIGRAVITY_PROMPT_COMMAND);
+      
+      const available = copilotAvailable || antigravityAvailable;
       logger.debug(
-        `ChatPanelProvider: ${CHAT_OPEN_COMMAND} ${available ? "found" : "not found"}`
+        `ChatPanelProvider availability: copilot=${copilotAvailable}, antigravity=${antigravityAvailable}`
       );
       return available;
     } catch (err) {
@@ -41,17 +48,31 @@ export class ChatPanelProvider implements AIProvider {
     customTemplate?: string
   ): Promise<AIGenerationResult> {
     const prompt = buildChatPanelPrompt(tasks, customTemplate);
+    const commands = await vscode.commands.getCommands(true);
 
-    logger.info("ChatPanelProvider: sending prompt to chat panel");
     logger.debug("Prompt:\n" + prompt);
 
-    await vscode.commands.executeCommand(CHAT_OPEN_COMMAND, {
-      query: prompt,
-      isPartialQuery: false,
-    });
+    if (commands.includes(ANTIGRAVITY_PROMPT_COMMAND)) {
+      logger.info("ChatPanelProvider: sending prompt to Antigravity Agent Panel");
+      
+      // Ensure the agent side panel is opened/focused first
+      if (commands.includes(ANTIGRAVITY_OPEN_COMMAND)) {
+        await vscode.commands.executeCommand(ANTIGRAVITY_OPEN_COMMAND);
+      }
+
+      // Send prompt to agent panel directly as a string
+      await vscode.commands.executeCommand(ANTIGRAVITY_PROMPT_COMMAND, prompt);
+    } else {
+      logger.info("ChatPanelProvider: sending prompt to VS Code Copilot Chat panel");
+      await vscode.commands.executeCommand(CHAT_OPEN_COMMAND, {
+        query: prompt,
+        isPartialQuery: false,
+      });
+    }
 
     // Chat panel is now open with the prompt sent.
     // The AI will respond in the panel — we return "chat" mode.
     return { mode: "chat" };
   }
 }
+

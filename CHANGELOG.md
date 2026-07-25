@@ -5,6 +5,12 @@ All notable changes to **Commity** will be documented in this file.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2026-07-26
+
+### Changed
+- Logo changed
+
+
 ## [1.0.3] - 2026-07-26
 
 ### Fixed

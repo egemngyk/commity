@@ -17,6 +17,7 @@ export interface DirectGenerationResult {
   commitMessage: string;
   gitCommands: string;
   tasks: CompletedTask[];
+  providerName: string;
 }
 
 /** Result returned when generation succeeds in chat mode */
@@ -67,58 +68,72 @@ export class CommitGenerationService {
       repoRoot,
       config.preferredTasksFilename
     );
-    logger.info(`Tasks file: ${tasksFilePath}`);
+    logger.info(`Tasks file path: ${tasksFilePath}`);
 
     let completedTasks: CompletedTask[] = [];
+    let fileDiffs: any[] = [];
+    const isDiffMode = tasksFilePath === null;
 
-    // ── Step 3: Check if we can do a diff vs HEAD ──────────────────
-    const fileExistsInHead = hasCommits && await this.gitService.fileExistsInHead(repoRoot, tasksFilePath);
-
-    if (!hasCommits || !fileExistsInHead) {
-      logger.info(
-        `Repository has no commits or tasks file does not exist in HEAD yet. Reading raw file contents directly.`
-      );
-      try {
-        const content = await fs.promises.readFile(tasksFilePath, "utf8");
-        completedTasks = this.taskAnalyzer.analyzeRawContent(content);
-      } catch (err) {
-        logger.error(`Failed to read tasks file: ${tasksFilePath}`, err);
-        throw new Error(`Failed to read tasks file from disk at "${tasksFilePath}".`);
+    if (isDiffMode) {
+      logger.info("CommitGenerationService: Tasks file not found. Switching to Git Diff Mode.");
+      fileDiffs = await this.gitService.getFullDiff(repoRoot);
+      if (fileDiffs.length === 0) {
+        throw new Error(
+          "No changes detected in Git repository.\n\n" +
+            "Please make some changes in your files before generating a commit message."
+        );
       }
+      logger.info(`Git Diff Mode: ${fileDiffs.length} changed file(s) detected.`);
     } else {
-      // Regular diff comparison against HEAD
-      const diffResult = await this.gitService.getDiffAgainstHead(
-        repoRoot,
-        tasksFilePath
-      );
+      // ── Step 3: Check if we can do a diff vs HEAD ──────────────────
+      const fileExistsInHead = hasCommits && await this.gitService.fileExistsInHead(repoRoot, tasksFilePath);
 
-      if (!diffResult.diff.trim()) {
-        throw new Error(
-          `No changes detected in "${diffResult.relativeTasksPath}" compared to HEAD.\n\n` +
-            "Make sure you have checked off some tasks (changed [ ] to [x]) and that the file has been modified."
+      if (!hasCommits || !fileExistsInHead) {
+        logger.info(
+          `Repository has no commits or tasks file does not exist in HEAD yet. Reading raw file contents directly.`
         );
+        try {
+          const content = await fs.promises.readFile(tasksFilePath, "utf8");
+          completedTasks = this.taskAnalyzer.analyzeRawContent(content);
+        } catch (err) {
+          logger.error(`Failed to read tasks file: ${tasksFilePath}`, err);
+          throw new Error(`Failed to read tasks file from disk at "${tasksFilePath}".`);
+        }
+      } else {
+        // Regular diff comparison against HEAD
+        const diffResult = await this.gitService.getDiffAgainstHead(
+          repoRoot,
+          tasksFilePath
+        );
+
+        if (!diffResult.diff.trim()) {
+          throw new Error(
+            `No changes detected in "${diffResult.relativeTasksPath}" compared to HEAD.\n\n` +
+              "Make sure you have checked off some tasks (changed [ ] to [x]) and that the file has been modified."
+          );
+        }
+
+        logger.debug(`Diff length: ${diffResult.diff.length} chars`);
+        completedTasks = this.taskAnalyzer.analyze(diffResult.diff);
       }
 
-      logger.debug(`Diff length: ${diffResult.diff.length} chars`);
-      completedTasks = this.taskAnalyzer.analyze(diffResult.diff);
-    }
+      // ── Step 4: Parse completed tasks summary ──────────────────────
+      logger.info(`Completed tasks found: ${completedTasks.length}`);
+      logger.info(this.taskAnalyzer.formatSummary(completedTasks));
 
-    // ── Step 4: Parse completed tasks summary ──────────────────────
-    logger.info(`Completed tasks found: ${completedTasks.length}`);
-    logger.info(this.taskAnalyzer.formatSummary(completedTasks));
-
-    if (completedTasks.length === 0) {
-      if (!hasCommits || !fileExistsInHead) {
-        throw new Error(
-          "No completed tasks detected in your tasks file.\n\n" +
-            "Since this is the first commit or the file is new, make sure there is at least one checked task: - [x] Task Title"
-        );
-      } else {
-        throw new Error(
-          "No completed tasks detected in the diff.\n\n" +
-            "Commity only detects tasks that changed from [ ] (unchecked) to [x] (checked). " +
-            "New tasks, deleted tasks, and modified descriptions are ignored."
-        );
+      if (completedTasks.length === 0) {
+        if (!hasCommits || !fileExistsInHead) {
+          throw new Error(
+            "No completed tasks detected in your tasks file.\n\n" +
+              "Since this is the first commit or the file is new, make sure there is at least one checked task: - [x] Task Title"
+          );
+        } else {
+          throw new Error(
+            "No completed tasks detected in the diff.\n\n" +
+              "Commity only detects tasks that changed from [ ] (unchecked) to [x] (checked). " +
+              "New tasks, deleted tasks, and modified descriptions are ignored."
+          );
+        }
       }
     }
 
@@ -147,11 +162,9 @@ export class CommitGenerationService {
     }
 
     // ── Step 6: Generate commit message ────────────────────────────
-    const result = await this.generateWithRetry(
-      provider,
-      completedTasks,
-      config
-    );
+    const result = isDiffMode
+      ? await this.generateFromDiffWithRetry(provider, fileDiffs, config)
+      : await this.generateWithRetry(provider, completedTasks, config);
 
     if (result.mode === "chat") {
       return { mode: "chat", tasks: completedTasks };
@@ -162,6 +175,7 @@ export class CommitGenerationService {
       commitMessage: result.commitMessage,
       gitCommands: formatGitCommands(result.commitMessage),
       tasks: completedTasks,
+      providerName: provider.name,
     };
   }
 
@@ -219,6 +233,67 @@ export class CommitGenerationService {
 
     void vscode.window.showWarningMessage(
       `Commity: Could not generate a perfectly formatted Conventional Commit after ${maxRetries} attempts. ` +
+        "The best result is shown — you can edit it manually."
+    );
+
+    return { mode: "direct", commitMessage: this.validator.clean(lastMessage) };
+  }
+
+  private async generateFromDiffWithRetry(
+    provider: AIProvider,
+    fileDiffs: any[],
+    config: AIProviderConfig
+  ): Promise<{ mode: "direct"; commitMessage: string } | { mode: "chat" }> {
+    if (!provider.generateFromDiff) {
+      throw new Error(`Provider "${provider.name}" does not support generating from Git Diff directly.`);
+    }
+
+    const result = await provider.generateFromDiff(
+      fileDiffs,
+      config.conventionalCommitStyle,
+      config.promptTemplate
+    );
+
+    if (result.mode === "chat") {
+      return result;
+    }
+
+    const maxRetries = config.maxRetries;
+    let lastMessage = result.commitMessage;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const cleaned = this.validator.clean(lastMessage);
+
+      if (!config.conventionalCommitStyle || this.validator.isValid(cleaned)) {
+        logger.info(
+          `CommitGenerationService (diff mode): valid message on attempt ${attempt}: "${cleaned}"`
+        );
+        return { mode: "direct", commitMessage: cleaned };
+      }
+
+      logger.warn(
+        `Attempt ${attempt}/${maxRetries} (diff mode): invalid commit message "${lastMessage}", retrying...`
+      );
+
+      if (attempt < maxRetries) {
+        const retryResult = await provider.generateFromDiff(
+          fileDiffs,
+          config.conventionalCommitStyle,
+          config.promptTemplate
+        );
+        if (retryResult.mode === "chat") {
+          return retryResult;
+        }
+        lastMessage = retryResult.commitMessage;
+      }
+    }
+
+    logger.warn(
+      `Max retries (${maxRetries}) reached (diff mode). Using best available: "${lastMessage}"`
+    );
+
+    void vscode.window.showWarningMessage(
+      `Commity: Could not generate a perfectly formatted Conventional Commit from Diff after ${maxRetries} attempts. ` +
         "The best result is shown — you can edit it manually."
     );
 

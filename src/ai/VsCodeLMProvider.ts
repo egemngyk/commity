@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
 import type { AIGenerationResult, AIProvider } from "./AIProvider.js";
 import type { CompletedTask } from "../models/CompletedTask.js";
-import { buildDirectPrompt } from "../utils/promptBuilder.js";
+import type { FileDiff } from "../git/GitService.js";
+import { buildDirectPrompt, buildDiffDirectPrompt } from "../utils/promptBuilder.js";
 import { logger } from "../utils/logger.js";
 
 /**
@@ -42,6 +43,20 @@ export class VsCodeLMProvider implements AIProvider {
     conventionalStyle: boolean,
     customTemplate?: string
   ): Promise<AIGenerationResult> {
+    const prompt = buildDirectPrompt(tasks, conventionalStyle, customTemplate);
+    return this.callLM(prompt);
+  }
+
+  public async generateFromDiff(
+    fileDiffs: FileDiff[],
+    _conventionalStyle: boolean,
+    customTemplate?: string
+  ): Promise<AIGenerationResult> {
+    const prompt = buildDiffDirectPrompt(fileDiffs, customTemplate);
+    return this.callLM(prompt);
+  }
+
+  private async callLM(prompt: string): Promise<AIGenerationResult> {
     const models = await vscode.lm.selectChatModels({});
     if (models.length === 0) {
       throw new Error(
@@ -51,8 +66,6 @@ export class VsCodeLMProvider implements AIProvider {
 
     const model = models[0];
     logger.info(`VsCodeLMProvider: using model "${model.name}" (${model.id})`);
-
-    const prompt = buildDirectPrompt(tasks, conventionalStyle, customTemplate);
     logger.debug("VsCodeLMProvider prompt:\n" + prompt);
 
     const messages = [vscode.LanguageModelChatMessage.User(prompt)];

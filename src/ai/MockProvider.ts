@@ -1,5 +1,6 @@
 import type { AIGenerationResult, AIProvider } from "./AIProvider.js";
 import type { CompletedTask } from "../models/CompletedTask.js";
+import type { FileDiff } from "../git/GitService.js";
 import { logger } from "../utils/logger.js";
 
 /**
@@ -81,6 +82,32 @@ export class MockProvider implements AIProvider {
     }
 
     logger.info(`MockProvider: returning simulated message "${commitMessage}"`);
+    return { mode: "direct", commitMessage };
+  }
+
+  public async generateFromDiff(
+    fileDiffs: FileDiff[],
+    conventionalStyle: boolean,
+    _customTemplate?: string
+  ): Promise<AIGenerationResult> {
+    logger.warn(`MockProvider: generating simulated commit from ${fileDiffs.length} changed files`);
+    
+    await new Promise<void>((resolve) => setTimeout(resolve, 500));
+    
+    if (fileDiffs.length === 0) {
+      return { mode: "direct", commitMessage: "chore: minor repository updates" };
+    }
+    
+    const file = fileDiffs[0].fileName;
+    const cleanFile = file.split("/").pop() || file;
+    
+    let commitMessage = "";
+    if (conventionalStyle) {
+      commitMessage = `refactor(${cleanFile.split(".")[0]}): modify code in ${cleanFile}`;
+    } else {
+      commitMessage = `modify code in ${cleanFile}`;
+    }
+    
     return { mode: "direct", commitMessage };
   }
 }

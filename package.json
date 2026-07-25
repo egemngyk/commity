@@ -87,7 +87,7 @@
             "chat",
             "vscode-lm",
             "openai",
-            "web-free",
+            "openrouter",
             "mock"
           ],
           "enumDescriptions": [
@@ -95,7 +95,7 @@
             "Use Antigravity / Copilot Chat panel (recommended)",
             "Use VS Code built-in Language Model API",
             "Use OpenAI-compatible HTTP API",
-            "Use free Web AI without login (GPT-4o-mini, Claude, Llama 3 via DuckDuckGo)",
+            "Use OpenRouter (access hundreds of models with one API key)",
             "Use mock provider (for development/testing)"
           ],
           "default": "auto",
@@ -154,22 +154,17 @@
           "maximum": 10,
           "description": "Maximum number of retries when AI response is invalid."
         },
-        "commity.webFreeModel": {
+        "commity.openrouterApiKey": {
           "type": "string",
-          "enum": [
-            "gpt-4o-mini",
-            "claude-3-haiku",
-            "meta-llama/Llama-3-70b-instruct",
-            "mistralai/Mixtral-8x7B-Instruct-v0.1"
-          ],
-          "enumDescriptions": [
-            "GPT-4o-mini (OpenAI / ChatGPT)",
-            "Claude 3 Haiku (Anthropic)",
-            "Llama 3 70B (Meta)",
-            "Mixtral 8x7B (Mistral)"
-          ],
-          "default": "gpt-4o-mini",
-          "description": "Which free Web AI model to use when using web-free provider."
+          "default": "",
+          "description": "API key for OpenRouter (openrouter.ai). Get a free key at https://openrouter.ai/keys",
+          "markdownDescription": "API key for [OpenRouter](https://openrouter.ai). Gives access to GPT-4o, Claude 3.5, Gemini and hundreds of other models. Get a free key at https://openrouter.ai/keys."
+        },
+        "commity.openrouterModel": {
+          "type": "string",
+          "default": "openrouter/auto",
+          "description": "Model ID to use with OpenRouter. Default is 'openrouter/auto' which lets OpenRouter pick the best available model.",
+          "markdownDescription": "Model to use via OpenRouter. Default `openrouter/auto` picks the best available option automatically. You can also specify any model ID from [openrouter.ai/models](https://openrouter.ai/models) e.g. `anthropic/claude-3.5-sonnet`, `openai/gpt-4o`, `google/gemini-pro`."
         }
       }
     }

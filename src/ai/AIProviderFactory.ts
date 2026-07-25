@@ -1,8 +1,8 @@
 import type { AIProvider } from "./AIProvider.js";
 import { ChatPanelProvider } from "./ChatPanelProvider.js";
 import { VsCodeLMProvider } from "./VsCodeLMProvider.js";
-import { WebFreeAIProvider } from "./WebFreeAIProvider.js";
 import { OpenAICompatibleProvider } from "./OpenAICompatibleProvider.js";
+import { OpenRouterProvider } from "./OpenRouterProvider.js";
 import { MockProvider } from "./MockProvider.js";
 import type { AIProviderConfig } from "../models/AIProviderConfig.js";
 import { logger } from "../utils/logger.js";
@@ -12,11 +12,11 @@ import { logger } from "../utils/logger.js";
  * based on the user's settings and what is actually available at runtime.
  *
  * Priority when `preferredProvider` is `"auto"`:
- *   1. ChatPanelProvider     (Antigravity / Copilot Chat)
- *   2. VsCodeLMProvider      (vscode.lm API)
- *   3. WebFreeAIProvider     (Free web AI via DuckDuckGo - no key needed)
- *   4. OpenAICompatibleProvider (if API key or local endpoint set)
- *   5. MockProvider          (always available — last resort)
+ *   1. ChatPanelProvider          (Antigravity / Copilot Chat)
+ *   2. VsCodeLMProvider           (vscode.lm API)
+ *   3. OpenRouterProvider         (openrouter.ai — needs API key)
+ *   4. OpenAICompatibleProvider   (if API key or local endpoint set)
+ *   5. MockProvider               (always available — last resort)
  */
 export class AIProviderFactory {
   constructor(private readonly config: AIProviderConfig) {}
@@ -41,7 +41,7 @@ export class AIProviderFactory {
     const candidates: AIProvider[] = [
       new ChatPanelProvider(),
       new VsCodeLMProvider(),
-      new WebFreeAIProvider(this.config),
+      new OpenRouterProvider(this.config),
       new OpenAICompatibleProvider(this.config),
     ];
 
@@ -74,8 +74,8 @@ export class AIProviderFactory {
       case "vscode-lm":
         provider = new VsCodeLMProvider();
         break;
-      case "web-free":
-        provider = new WebFreeAIProvider(this.config);
+      case "openrouter":
+        provider = new OpenRouterProvider(this.config);
         break;
       case "openai":
         provider = new OpenAICompatibleProvider(this.config);

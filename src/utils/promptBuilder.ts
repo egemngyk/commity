@@ -1,4 +1,5 @@
 import type { CompletedTask } from "../models/CompletedTask.js";
+import type { FileDiff } from "../git/GitService.js";
 
 const DEFAULT_TEMPLATE_CHAT = `You are a Git expert. Based on the following completed tasks, generate EXACTLY ONE Conventional Commit message.
 
@@ -24,6 +25,31 @@ Rules:
 
 Completed tasks:
 {tasks}`;
+
+const DIFF_TEMPLATE_CHAT = `You are a Git expert. Based on the following code changes (git diff), generate EXACTLY ONE Conventional Commit message.
+
+IMPORTANT: Your response must consist ONLY of a bash code block containing these exact git commands, with no other text, no markdown outside the code block, and no explanations:
+\`\`\`bash
+git add .
+git commit -m "type(scope): short description"
+\`\`\`
+
+Where type is one of: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+
+Changed files and their diffs:
+{diff}`;
+
+const DIFF_TEMPLATE_DIRECT = `You are a Git expert. Based on the following code changes (git diff), generate EXACTLY ONE Conventional Commit message.
+
+Rules:
+- Output ONLY the commit message string. No markdown. No explanations. No quotes. No code block.
+- Use Conventional Commit format: type(scope): description
+- Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+- Keep it under 72 characters
+- Use imperative mood (implement, add, fix — not implemented, added, fixed)
+
+Changed files and their diffs:
+{diff}`;
 
 /**
  * Builds the AI prompt for the Chat Panel provider.
@@ -57,6 +83,53 @@ export function buildDirectPrompt(
 
   const base = conventionalStyle ? DEFAULT_TEMPLATE_DIRECT : DEFAULT_TEMPLATE_DIRECT;
   return base.replace("{tasks}", taskList);
+}
+
+/**
+ * Builds a prompt from git file diffs for the Chat Panel provider.
+ * Used when no TASKS.md file is found in the project.
+ */
+export function buildDiffChatPrompt(
+  fileDiffs: FileDiff[],
+  customTemplate?: string
+): string {
+  const diffBlock = formatFileDiffsForPrompt(fileDiffs);
+  const template = customTemplate?.trim() ? customTemplate : DIFF_TEMPLATE_CHAT;
+  return template.replace("{diff}", diffBlock);
+}
+
+/**
+ * Builds a prompt from git file diffs for direct providers.
+ * Used when no TASKS.md file is found in the project.
+ */
+export function buildDiffDirectPrompt(
+  fileDiffs: FileDiff[],
+  customTemplate?: string
+): string {
+  const diffBlock = formatFileDiffsForPrompt(fileDiffs);
+  const template = customTemplate?.trim() ? customTemplate : DIFF_TEMPLATE_DIRECT;
+  return template.replace("{diff}", diffBlock);
+}
+
+/**
+ * Formats an array of FileDiff objects into a readable block for the AI prompt.
+ * Each file gets a header with its name, followed by the truncated diff.
+ */
+function formatFileDiffsForPrompt(fileDiffs: FileDiff[]): string {
+  const MAX_DIFF_CHARS_PER_FILE = 1500;
+  const MAX_FILES = 20;
+
+  return fileDiffs
+    .slice(0, MAX_FILES)
+    .map((fd) => {
+      const diffContent = fd.isBinary
+        ? fd.diff
+        : fd.diff.length > MAX_DIFF_CHARS_PER_FILE
+        ? fd.diff.slice(0, MAX_DIFF_CHARS_PER_FILE) + "\n... (truncated)"
+        : fd.diff;
+      return `### ${fd.fileName}\n\`\`\`diff\n${diffContent}\n\`\`\``;
+    })
+    .join("\n\n");
 }
 
 /**

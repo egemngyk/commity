@@ -23,7 +23,7 @@ export class TasksFileLocator {
   public async locate(
     repoRoot: string,
     preferredName?: string
-  ): Promise<string> {
+  ): Promise<string | null> {
     // 1. If user specified a preferred filename, try that first
     if (preferredName?.trim()) {
       const preferred = path.join(repoRoot, preferredName.trim());
@@ -40,9 +40,9 @@ export class TasksFileLocator {
     const found = await this.findCandidates(repoRoot, 3);
 
     if (found.length === 0) {
-      // 3. No file found — ask user to browse
-      logger.warn("No tasks file found, prompting user to select manually.");
-      return this.promptUserToBrowse(repoRoot);
+      // No file found — return null to signal "use git diff mode"
+      logger.info("No tasks file found. Will fall back to git diff mode.");
+      return null;
     }
 
     if (found.length === 1) {
@@ -50,7 +50,7 @@ export class TasksFileLocator {
       return found[0];
     }
 
-    // 4. Multiple candidates — let the user pick
+    // 3. Multiple candidates — let the user pick
     logger.info(`Found ${found.length} candidate task files, prompting user.`);
     return this.promptUserToChoose(found, repoRoot);
   }
@@ -126,21 +126,4 @@ export class TasksFileLocator {
     return selected.filePath;
   }
 
-  private async promptUserToBrowse(repoRoot: string): Promise<string> {
-    const selected = await vscode.window.showOpenDialog({
-      defaultUri: vscode.Uri.file(repoRoot),
-      canSelectMany: false,
-      canSelectFolders: false,
-      filters: { "Markdown Files": ["md"] },
-      title: "Commity: Select your Tasks/TODO file",
-    });
-
-    if (!selected || selected.length === 0) {
-      throw new Error(
-        "No tasks file found. Please create a TASKS.md file or specify one in settings."
-      );
-    }
-
-    return selected[0].fsPath;
-  }
 }

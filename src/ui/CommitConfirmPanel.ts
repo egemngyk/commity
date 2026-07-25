@@ -23,6 +23,7 @@ export class CommitConfirmPanel {
   private readonly panel: vscode.WebviewPanel;
   private commitMessage: string;
   private gitCommands: string;
+  private providerName: string;
   private readonly tasks: CompletedTask[];
   private onRegenerateCallback: RegenerateCallback | undefined;
   private readonly disposables: vscode.Disposable[] = [];
@@ -32,11 +33,13 @@ export class CommitConfirmPanel {
     commitMessage: string,
     gitCommands: string,
     tasks: CompletedTask[],
+    providerName: string,
     _extensionUri: vscode.Uri
   ) {
     this.panel = panel;
     this.commitMessage = commitMessage;
     this.gitCommands = gitCommands;
+    this.providerName = providerName;
     this.tasks = tasks;
 
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
@@ -56,14 +59,15 @@ export class CommitConfirmPanel {
     extensionUri: vscode.Uri,
     commitMessage: string,
     gitCommands: string,
-    tasks: CompletedTask[]
+    tasks: CompletedTask[],
+    providerName: string
   ): CommitConfirmPanel {
     const column = vscode.window.activeTextEditor
       ? vscode.window.activeTextEditor.viewColumn
       : undefined;
 
     if (CommitConfirmPanel.currentPanel) {
-      CommitConfirmPanel.currentPanel.update(commitMessage, gitCommands);
+      CommitConfirmPanel.currentPanel.update(commitMessage, gitCommands, providerName);
       CommitConfirmPanel.currentPanel.panel.reveal(column);
       return CommitConfirmPanel.currentPanel;
     }
@@ -87,6 +91,7 @@ export class CommitConfirmPanel {
       commitMessage,
       gitCommands,
       tasks,
+      providerName,
       extensionUri
     );
 
@@ -99,9 +104,12 @@ export class CommitConfirmPanel {
   }
 
   /** Update the panel with a new commit message */
-  public update(commitMessage: string, gitCommands: string): void {
+  public update(commitMessage: string, gitCommands: string, providerName?: string): void {
     this.commitMessage = commitMessage;
     this.gitCommands = gitCommands;
+    if (providerName) {
+      this.providerName = providerName;
+    }
     this.render();
   }
 
@@ -188,6 +196,20 @@ export class CommitConfirmPanel {
       .join("");
 
     const commitMessageEscaped = this.escapeHtml(this.commitMessage);
+    const providerEscaped = this.escapeHtml(this.providerName);
+
+    // Pick a provider icon
+    const providerIcon = this.providerName.toLowerCase().includes("openrouter")
+      ? "🌐"
+      : this.providerName.toLowerCase().includes("openai")
+      ? "⚡"
+      : this.providerName.toLowerCase().includes("chat")
+      ? "💬"
+      : this.providerName.toLowerCase().includes("vscode")
+      ? "🔵"
+      : this.providerName.toLowerCase().includes("mock")
+      ? "🧪"
+      : "🤖";
 
     return /* html */ `<!DOCTYPE html>
 <html lang="en">
@@ -421,6 +443,21 @@ export class CommitConfirmPanel {
       color: var(--warning);
       margin-bottom: 20px;
     }
+
+    /* ── Provider badge ── */
+    .provider-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--vscode-badge-background, rgba(128,128,128,0.15));
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 0.72rem;
+      font-weight: 500;
+      opacity: 0.75;
+      margin-top: 5px;
+    }
   </style>
 </head>
 <body>
@@ -435,6 +472,7 @@ export class CommitConfirmPanel {
     <div>
       <h1>Commity</h1>
       <div class="subtitle">Review your commit before running</div>
+      <div class="provider-badge">${providerIcon} ${providerEscaped}</div>
     </div>
   </div>
 

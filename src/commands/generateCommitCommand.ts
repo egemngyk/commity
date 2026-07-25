@@ -30,7 +30,8 @@ function readConfig(): AIProviderConfig {
     preferredTasksFilename: cfg.get<string>("preferredTasksFilename", ""),
     autoCopy: cfg.get<boolean>("autoCopy", false),
     maxRetries: cfg.get<number>("maxRetries", 3),
-    webFreeModel: cfg.get<string>("webFreeModel", "gpt-4o-mini"),
+    openrouterApiKey: cfg.get<string>("openrouterApiKey", ""),
+    openrouterModel: cfg.get<string>("openrouterModel", "openrouter/auto"),
   };
 }
 
@@ -107,7 +108,8 @@ export function registerGenerateCommitCommand(
               extensionUri,
               result.commitMessage,
               result.gitCommands,
-              result.tasks
+              result.tasks,
+              result.providerName
             );
 
             // Hook up the Regenerate button
@@ -116,7 +118,7 @@ export function registerGenerateCommitCommand(
               const newResult = await service.run(newConfig);
               if (newResult.mode === "direct") {
                 setLastCommitMessage(newResult.commitMessage);
-                panel.update(newResult.commitMessage, newResult.gitCommands);
+                panel.update(newResult.commitMessage, newResult.gitCommands, newResult.providerName);
                 panel.postMessage({
                   command: "updateMessage",
                   commitMessage: newResult.commitMessage,

@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
 import type { AIGenerationResult, AIProvider } from "./AIProvider.js";
 import type { CompletedTask } from "../models/CompletedTask.js";
-import { buildChatPanelPrompt } from "../utils/promptBuilder.js";
+import type { FileDiff } from "../git/GitService.js";
+import { buildChatPanelPrompt, buildDiffChatPrompt } from "../utils/promptBuilder.js";
 import { logger } from "../utils/logger.js";
 
 /** Standard VS Code chat open command */
@@ -16,7 +17,7 @@ const ANTIGRAVITY_OPEN_COMMAND = "antigravity.openAgent";
  * built-in chat panel (Antigravity agent or GitHub Copilot Chat).
  *
  * The AI's response appears in the chat panel — the extension does NOT
- * capture it programmatically (no internal API available).
+ * capture it programmatically (no internal API available).\
  *
  * The prompt instructs the AI to respond with:
  *   git add .
@@ -48,19 +49,28 @@ export class ChatPanelProvider implements AIProvider {
     customTemplate?: string
   ): Promise<AIGenerationResult> {
     const prompt = buildChatPanelPrompt(tasks, customTemplate);
-    const commands = await vscode.commands.getCommands(true);
+    return this.sendPrompt(prompt);
+  }
 
+  public async generateFromDiff(
+    fileDiffs: FileDiff[],
+    _conventionalStyle: boolean,
+    customTemplate?: string
+  ): Promise<AIGenerationResult> {
+    const prompt = buildDiffChatPrompt(fileDiffs, customTemplate);
+    return this.sendPrompt(prompt);
+  }
+
+  private async sendPrompt(prompt: string): Promise<AIGenerationResult> {
+    const commands = await vscode.commands.getCommands(true);
     logger.debug("Prompt:\n" + prompt);
 
     if (commands.includes(ANTIGRAVITY_PROMPT_COMMAND)) {
       logger.info("ChatPanelProvider: sending prompt to Antigravity Agent Panel");
       
-      // Ensure the agent side panel is opened/focused first
       if (commands.includes(ANTIGRAVITY_OPEN_COMMAND)) {
         await vscode.commands.executeCommand(ANTIGRAVITY_OPEN_COMMAND);
       }
-
-      // Send prompt to agent panel directly as a string
       await vscode.commands.executeCommand(ANTIGRAVITY_PROMPT_COMMAND, prompt);
     } else {
       logger.info("ChatPanelProvider: sending prompt to VS Code Copilot Chat panel");
@@ -70,9 +80,6 @@ export class ChatPanelProvider implements AIProvider {
       });
     }
 
-    // Chat panel is now open with the prompt sent.
-    // The AI will respond in the panel — we return "chat" mode.
     return { mode: "chat" };
   }
 }
-

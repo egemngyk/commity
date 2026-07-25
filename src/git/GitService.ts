@@ -137,4 +137,79 @@ export class GitService {
     const result = await this.getDiffAgainstHead(repoRoot, absoluteFilePath);
     return result.diff.trim().length > 0;
   }
+
+  /**
+   * Gets the full diff of all changed files vs HEAD (staged + unstaged).
+   * Returns an array of per-file diffs with filenames, suitable for prompting.
+   * Equivalent to: git diff HEAD
+   */
+  public async getFullDiff(repoRoot: string): Promise<FileDiff[]> {
+    logger.debug("Running: git diff HEAD");
+    try {
+      const { stdout } = await execAsync("git diff HEAD", { cwd: repoRoot });
+      if (!stdout.trim()) {
+        // Also check staged-only changes (nothing unstaged)
+        const { stdout: staged } = await execAsync("git diff --cached HEAD", { cwd: repoRoot });
+        return this.parseFileDiffs(staged);
+      }
+      return this.parseFileDiffs(stdout);
+    } catch (err) {
+      logger.error("git diff HEAD failed", err);
+      throw new Error("Failed to get git diff. Make sure you have at least one commit.");
+    }
+  }
+
+  /**
+   * Parses raw unified diff output into per-file sections.
+   */
+  private parseFileDiffs(rawDiff: string): FileDiff[] {
+    if (!rawDiff.trim()) {
+      return [];
+    }
+
+    const fileDiffs: FileDiff[] = [];
+    // Split on diff --git header lines
+    const sections = rawDiff.split(/^(?=diff --git )/m);
+
+    for (const section of sections) {
+      if (!section.trim()) {
+        continue;
+      }
+
+      // Extract filename from "diff --git a/... b/..."
+      const headerMatch = /^diff --git a\/(.+?) b\/(.+)$/m.exec(section);
+      if (!headerMatch) {
+        continue;
+      }
+
+      const fileName = headerMatch[2].trim();
+
+      // Extract only the hunk lines (@@...@@ + content), skip binary files
+      const binaryMatch = /Binary files/.test(section);
+      if (binaryMatch) {
+        fileDiffs.push({ fileName, diff: "(binary file — skipped)", isBinary: true });
+        continue;
+      }
+
+      // Collect hunk content (lines starting with @@, +, -, or context)
+      const hunkLines = section
+        .split("\n")
+        .filter((line) => /^(@@|\+|-| )/.test(line) && !line.startsWith("--- ") && !line.startsWith("+++ "))
+        .join("\n")
+        .trim();
+
+      if (hunkLines) {
+        fileDiffs.push({ fileName, diff: hunkLines, isBinary: false });
+      }
+    }
+
+    return fileDiffs;
+  }
+}
+
+/** A single file's diff parsed from git output */
+export interface FileDiff {
+  fileName: string;
+  diff: string;
+  isBinary: boolean;
 }

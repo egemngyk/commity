@@ -1,4 +1,5 @@
 import type { CompletedTask } from "../models/CompletedTask.js";
+import type { FileDiff } from "../git/GitService.js";
 import { logger } from "../utils/logger.js";
 
 /**
@@ -41,6 +42,21 @@ export interface AIProvider {
    */
   generate(
     tasks: CompletedTask[],
+    conventionalStyle: boolean,
+    customTemplate?: string
+  ): Promise<AIGenerationResult>;
+
+  /**
+   * Generate a commit message from git file diffs (no TASKS.md mode).
+   * Providers that don't override this will get a default implementation
+   * based on their `generate` method.
+   *
+   * @param fileDiffs        - Array of per-file diffs from git
+   * @param conventionalStyle - Whether to enforce Conventional Commit format
+   * @param customTemplate   - Optional user-defined prompt template
+   */
+  generateFromDiff?(
+    fileDiffs: FileDiff[],
     conventionalStyle: boolean,
     customTemplate?: string
   ): Promise<AIGenerationResult>;

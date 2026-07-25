@@ -90,7 +90,7 @@ export class UpdateService {
 
   private async promptUpdate(version: string, release: GitHubReleaseResponse): Promise<void> {
     const choice = await vscode.window.showInformationMessage(
-      `🚀 Commity v${version} is available! Would you like to update?`,
+      `Commity v${version} is available! Would you like to update?`,
       "Update Now",
       "Changelog"
     );
@@ -129,7 +129,7 @@ export class UpdateService {
             } catch {}
 
             const reloadChoice = await vscode.window.showInformationMessage(
-              `✅ Commity successfully updated to v${version}! Please reload VS Code to apply.`,
+              `Commity successfully updated to v${version}! Please reload VS Code to apply.`,
               "Reload Window"
             );
 

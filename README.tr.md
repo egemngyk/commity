@@ -1,129 +1,129 @@
 # Commity
 
-> 🤖 `TASKS.md` üzerindeki tamamlanan görevleri analiz ederek veya projede bir görev dosyası yoksa doğrudan kod değişikliklerini (git diff) inceleyerek otomatik olarak Conventional Commit (Kurallı Commit) mesajları üreten VS Code ve Antigravity IDE uyumlu yapay zeka eklentisi. Works with Antigravity IDE, GitHub Copilot, OpenRouter, and OpenAI-compatible APIs.
+> TASKS.md uzerindeki tamamlanan gorevleri analiz ederek veya projede bir gorev dosyasi yoksa dogrudan kod degisikliklerini (git diff) inceleyerek otomatik olarak Conventional Commit mesajlari ureten VS Code ve Antigravity IDE uyumlu yapay zeka eklentisi.
 
-🇬🇧 **[README.md](./README.md) (English)** | 🇹🇷 **Türkçe dökümantasyon**
+[README.md](./README.md) (English) | Turkce dokumantasyon
 
-![Commity İkonu](icons/commity.png)
+![Commity Ikonu](icons/commity.png)
 
-## Özellikler
+## Ozellikler
 
-- ✅ **Tamamlanan Görevleri Algılama** — `TASKS.md` üzerindeki `git diff HEAD` sonucunu analiz ederek sadece `[ ]` (yapılacak) durumundan `[x]` (tamamlandı) durumuna geçen satırları yakalar.
-- 🔍 **Git Diff Modu (Sıfır Yapılandırma)** — Çalışma alanında herhangi bir görev/todo dosyası yoksa, Commity otomatik olarak staged + unstaged kod değişikliklerini dosya isimleriyle birlikte toplar ve AI'dan bu değişikliklere göre commit mesajı üretmesini ister.
-- 🌐 **OpenRouter Desteği** — OpenRouter entegrasyonu sayesinde (varsayılan olarak `openrouter/auto` modeliyle), tek bir API anahtarı ile yüzlerce yapay zeka modeline (GPT-4o, Claude 3.5, Gemini, Llama) erişebilirsiniz.
-- 🤖 **Yapay Zeka Destekli Commit Mesajları** — Antigravity veya Copilot chat paneline otomatik prompt gönderir. Sohbet paneli yoksa `vscode.lm` (VS Code Dil Modeli API'si), OpenRouter veya OpenAI uyumlu HTTP endpoint fallback zincirini çalıştırır.
-- 📋 **Onay ve Çalıştırma** — Eklenti kendi başına onay almadan commit atmaz. Önizleme ekranında `git add . && git commit -m "..."` komutlarını ve hangi AI sağlayıcısının kullanıldığını gösteren bir badge görüntüler, tek tıkla entegre terminalde çalıştırmanıza olanak tanır.
-- ✏️ **Düzenlenebilir Arayüz** — AI'ın ürettiği commit mesajını terminalde çalıştırmadan önce webview üzerinde düzenleyebilirsiniz.
-- 🔄 **Yeniden Üretme (Regenerate)** — Beğenmediğiniz commit mesajlarını tek butonla yeniden üretebilirsiniz.
-- 🎨 **VS Code Temasıyla Uyumlu** — Arayüz tamamen VS Code renk paletine (koyu/açık tema) uyum sağlar.
+- **Tamamlanan Gorevleri Algilama** - `TASKS.md` uzerindeki `git diff HEAD` sonucunu analiz ederek sadece `[ ]` durumundan `[x]` durumuna gecen satirlari yakalar.
+- **Git Diff Modu (Sifir Yapilandirma)** - Calisma alaninda herhangi bir gorev/todo dosyasi yoksa, Commity otomatik olarak staged + unstaged kod degisikliklerini dosya isimleriyle birlikte toplar ve AI'dan bu degisikliklere gore commit mesaji uretmesini ister.
+- **OpenRouter Destegi** - OpenRouter entegrasyonu sayesinde (varsayilan olarak `openrouter/auto` modeliyle), tek bir API anahtari ile yuzlerce yapay zeka modeline erisebilirsiniz.
+- **Yapay Zeka Destekli Commit Mesajlari** - Antigravity veya Copilot chat paneline otomatik prompt gonderir. Sohbet paneli yoksa `vscode.lm`, OpenRouter veya OpenAI uyumlu HTTP endpoint fallback zincirini calistirir.
+- **Onay ve Calistirma** - Eklenti kendi basina onay almadan commit atmaz. Onizleme ekraninda git komutlarini ve hangi AI saglayicisinin kullanildigini gosteren bir badge gosterir.
+- **Duzenlenebilir Arayuz** - AI'in urettigi commit mesajini terminalde calistirmadan once webview uzerinde duzenleyebilirsiniz.
+- **Yeniden Uretme (Regenerate)** - Begenmediginiz commit mesajlarini tek butonla yeniden uretebilirsiniz.
+- **VS Code Temasiyla Uyumlu** - Arayuz tamamen VS Code renk paletine (koyu/acik tema) uyum saglar.
 
-## Çalışma Mantığı
+## Calisma Mantigi
 
 ```
-Ctrl+Shift+P → "Commity: Generate Commit Message"
-       │
-       ▼
-1. Git repo kökünü tespit eder
-2. TASKS.md (veya tasks.md / Todo.md / TODO.md) dosyasını arar
-       │
-       ├─ Görev Dosyası Bulundu mu?
-       │     └─ HEAD commit'ine kıyasla [ ] -> [x] geçişlerini ayıklar
-       │
-       └─ Görev Dosyası Yok mu?
-             └─ Git Diff Moduna Geçer: Değişen tüm kod satırlarını ve dosya adlarını toplar
-       │
-       ▼
-3. Toplanan görev/değişikliklerle AI prompt'unu oluşturur
-       │
-       ├─ Antigravity / Copilot chat paneli varsa
-       │     └─ Prompt'u chat paneline yazar → AI yanıtı orada üretilir
-       │
-       └─ Chat paneli yoksa
-             ├─ vscode.lm API → doğrudan mesajı üretir
-             ├─ OpenRouter API → doğrudan mesajı üretir
-             ├─ OpenAI uyumlu API → doğrudan mesajı üretir
-             └─ Mock (Geliştirici modu) → örnek mesaj döner
-       │
-       ▼
-4. Arayüzde onay paneli açılır (kullanılan AI sağlayıcı badge'i ile):
-    ┌──────────────────────────────────────────┐
-    │  feat(engine): implement physics engine   │ ← Düzenlenebilir
-    │                                           │
-    │  [💬 Antigravity AI Agent]                │ ← Sağlayıcı badge'i
-    │                                           │
-    │  git add .                                │
-    │  git commit -m "feat(engine): implement..." │
-    │                                           │
-    │  [▶ Terminalde Çalıştır] [📋 Kopyala]      │
-    └──────────────────────────────────────────┘
+Ctrl+Shift+P -> "Commity: Generate Commit Message"
+       |
+       v
+1. Git repo kokunu tespit eder
+2. TASKS.md (veya tasks.md / Todo.md / TODO.md) dosyasini arar
+       |
+       +-- Gorev Dosyasi Bulundu mu?
+       |     +-- HEAD commit'ine kiyasla [ ] -> [x] gecislerini ayiklar
+       |
+       +-- Gorev Dosyasi Yok mu?
+             +-- Git Diff Moduna Gecer: Degisen tum kod satirlarini ve dosya adlarini toplar
+       |
+       v
+3. Toplanan gorev/degisikliklerle AI prompt'unu olusturur
+       |
+       +-- Antigravity / Copilot chat paneli varsa
+       |     +-- Prompt'u chat paneline yazar -> AI yaniti orada uretilir
+       |
+       +-- Chat paneli yoksa
+             +-- vscode.lm API -> dogrudan mesaji uretir
+             +-- OpenRouter API -> dogrudan mesaji uretir
+             +-- OpenAI uyumlu API -> dogrudan mesaji uretir
+             +-- Mock (Gelistirici modu) -> ornek mesaj doner
+       |
+       v
+4. Arayuzde onay paneli acilir (kullanilan AI saglayici badge'i ile):
+    +------------------------------------------+
+    |  feat(engine): implement physics engine   | <- Duzenlenebilir
+    |                                           |
+    |  [Antigravity AI Agent]                   | <- Saglayici badge'i
+    |                                           |
+    |  git add .                                |
+    |  git commit -m "feat(engine): implement..." |
+    |                                           |
+    |  [Terminalde Calistir] [Kopyala]          |
+    +------------------------------------------+
 ```
 
 ## Kurulum
 
-### VSIX Dosyasından Manuel Kurulum
+### VSIX Dosyasindan Manuel Kurulum
 ```bash
-git clone https://github.com/kullanici_adin/commity.git
+git clone https://github.com/egemngyk/commity.git
 cd commity
 npm install
 npm run compile
 npx vsce package
-# Sonrasında VS Code/Antigravity üzerinde: Uzantılar (Extensions) → ··· → Install from VSIX
+# Sonrasinda VS Code/Antigravity uzerinde: Uzantilar (Extensions) -> ... -> Install from VSIX
 ```
 
-### Geliştirici Modunda Test Etme (F5)
+### Gelistirici Modunda Test Etme (F5)
 ```bash
-git clone https://github.com/kullanici_adin/commity.git
+git clone https://github.com/egemngyk/commity.git
 cd commity
 npm install
-# Projeyi VS Code / Antigravity ile açın
-# F5 tuşuna basın → Yeni test penceresi açılacaktır
+# Projeyi VS Code / Antigravity ile acin
+# F5 tusuna basin -> Yeni test penceresi acilacaktir
 ```
 
 ## Gereksinimler
 
 - VS Code `^1.85.0` veya Antigravity IDE
-- Bir Git reposu (dosya değişiklikleri yapılmış veya görev listesi dosyası içeren)
-- **Yapay zeka özellikleri için aşağıdakilerden biri:**
-  - Antigravity IDE (Dahili yapay zeka sohbet paneli üzerinden)
+- Bir Git reposu (dosya degisiklikleri yapilmis veya gorev listesi dosyasi iceren)
+- Yapay zeka ozellikleri icin asagidakilerden biri:
+  - Antigravity IDE (Dahili yapay zeka sohbet paneli uzerinden)
   - GitHub Copilot Chat eklentisi
-  - OpenRouter API anahtarı (veya uyumlu bir API endpoint)
+  - OpenRouter API anahtari (veya uyumlu bir API endpoint)
   - OpenAI API Key (veya uyumlu bir API endpoint)
-  - Ollama / LM Studio (Yerel modeller için, API anahtarı gerekmez)
+  - Ollama / LM Studio (Yerel modeller icin, API anahtari gerekmez)
 
 ## Ayarlar
 
-| Ayar | Varsayılan | Açıklama |
+| Ayar | Varsayilan | Aciklama |
 |---|---|---|
 | `commity.preferredProvider` | `"auto"` | `auto` / `chat` / `vscode-lm` / `openai` / `openrouter` / `mock` |
-| `commity.openrouterApiKey` | `""` | OpenRouter API anahtarı |
+| `commity.openrouterApiKey` | `""` | OpenRouter API anahtari |
 | `commity.openrouterModel` | `"openrouter/auto"` | OpenRouter model ID'si |
-| `commity.openaiApiKey` | `""` | OpenAI veya uyumlu API anahtarı |
+| `commity.openaiApiKey` | `""` | OpenAI veya uyumlu API anahtari |
 | `commity.openaiBaseUrl` | `"https://api.openai.com/v1"` | API endpoint adresi (Ollama, LM Studio vb. destekler) |
-| `commity.model` | `"gpt-4o"` | OpenAI sağlayıcısı için model adı |
-| `commity.temperature` | `0.3` | Yaratıcılık oranı (0–2) |
-| `commity.conventionalCommitStyle` | `true` | Kurallı commit formatını zorunlu kılar (`feat/fix/chore...`) |
-| `commity.promptTemplate` | `""` | Özel prompt şablonu. `{tasks}` veya `{diff}` yer tutucusunu kullanın |
-| `commity.preferredTasksFilename` | `""` | Otomatik dosya taramayı bypass edip sabit bir dosya seçer |
-| `commity.autoCopy` | `false` | Üretilen komutları otomatik olarak panoya kopyalar |
-| `commity.maxRetries` | `3` | AI geçersiz format ürettiğinde yapılacak maksimum deneme sayısı |
+| `commity.model` | `"gpt-4o"` | OpenAI saglayicisi icin model adi |
+| `commity.temperature` | `0.3` | Yaraticilik orani (0-2) |
+| `commity.conventionalCommitStyle` | `true` | Kuralli commit formatini zorunlu kilar (`feat/fix/chore...`) |
+| `commity.promptTemplate` | `""` | Ozel prompt sablonu. `{tasks}` veya `{diff}` yer tutucusunu kullanin |
+| `commity.preferredTasksFilename` | `""` | Otomatik dosya taramayi bypass edip sabit bir dosya secer |
+| `commity.autoCopy` | `false` | Uretilen komutlari otomatik olarak panoya kopyalar |
+| `commity.maxRetries` | `3` | AI gecersiz format urettiginde yapilacak maksimum deneme sayisi |
 
-## TASKS.md Formatı
+## TASKS.md Formati
 
-Eğer bir görev listesi dosyası kullanmayı tercih ederseniz, Commity standart görev listelerini okur:
+Eger bir gorev listesi dosyasi kullanmayi tercih ederseniz, Commity standart gorev listelerini okur:
 
 ```markdown
 ## Sprint 3
 
-- [x] Fizik motorunu yaz            ← ✅ Algılanır (önceden seçilmemişti)
-- [x] Çarpışma sistemini entegre et ← ✅ Algılanır
-- [ ] Çoklu oyuncu desteği ekle     ← ⏭ Pas geçilir (tamamlanmamış)
-- [x] Zaten önceden tamamlanmıştı   ← ⏭ Pas geçilir (HEAD commit'inde zaten [x] durumundaydı)
+- [x] Fizik motorunu yaz            <- Algilanir (onceden secilmemisti)
+- [x] Carpisma sistemini entegre et <- Algilanir
+- [ ] Coklu oyuncu destegi ekle     <- Pas gecilir (tamamlanmamis)
+- [x] Zaten onceden tamamlanmisti   <- Pas gecilir (HEAD commit'inde zaten [x] durumundaydi)
 ```
 
-Sadece bu commit içerisinde `[ ]` durumundan `[x]` durumuna geçen satırlar dikkate alınır.
+Sadece bu commit icerisinde `[ ]` durumundan `[x]` durumuna gecen satirlar dikkate alinir.
 
 ## Lisans
 
-Bu proje MIT Lisansı ile lisanslanmıştır - detaylar için [LICENSE](./LICENSE) dosyasına göz atabilirsiniz.
+Bu proje MIT Lisansi ile lisanslanmistir - detaylar icin [LICENSE](./LICENSE) dosyasina goz atabilirsiniz.
 
-MIT © 2026 Muhammed Egemen Geyik
+MIT (c) 2026 Muhammed Egemen Geyik

@@ -25,7 +25,7 @@ export function registerCopyCommitCommand(): vscode.Disposable {
 
       logger.info(`copyCommitCommand: copied to clipboard — "${lastMessage}"`);
       void vscode.window.showInformationMessage(
-        `✅ Commity: Git commands copied to clipboard!`
+        `Commity: Git commands copied to clipboard!`
       );
     }
   );

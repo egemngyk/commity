@@ -151,7 +151,7 @@ export class CommitConfirmPanel {
     logger.info(`CommitConfirmPanel: executed commit: "${this.commitMessage}"`);
 
     void vscode.window.showInformationMessage(
-      `✅ Commity: Running git commit in terminal — "${this.commitMessage}"`
+      `Commity: Running git commit in terminal — "${this.commitMessage}"`
     );
 
     this.panel.dispose();
@@ -161,7 +161,7 @@ export class CommitConfirmPanel {
     await vscode.env.clipboard.writeText(this.gitCommands);
     logger.info("CommitConfirmPanel: copied git commands to clipboard");
     void vscode.window.showInformationMessage(
-      "✅ Commity: Git commands copied to clipboard!"
+      "Commity: Git commands copied to clipboard!"
     );
   }
 
@@ -198,18 +198,18 @@ export class CommitConfirmPanel {
     const commitMessageEscaped = this.escapeHtml(this.commitMessage);
     const providerEscaped = this.escapeHtml(this.providerName);
 
-    // Pick a provider icon
+    // Pick a provider label prefix
     const providerIcon = this.providerName.toLowerCase().includes("openrouter")
-      ? "🌐"
+      ? "[OpenRouter]"
       : this.providerName.toLowerCase().includes("openai")
-      ? "⚡"
+      ? "[OpenAI]"
       : this.providerName.toLowerCase().includes("chat")
-      ? "💬"
+      ? "[Chat]"
       : this.providerName.toLowerCase().includes("vscode")
-      ? "🔵"
+      ? "[vscode.lm]"
       : this.providerName.toLowerCase().includes("mock")
-      ? "🧪"
-      : "🤖";
+      ? "[Mock]"
+      : "[AI]";
 
     return /* html */ `<!DOCTYPE html>
 <html lang="en">
@@ -468,7 +468,7 @@ export class CommitConfirmPanel {
   </div>
 
   <div class="header">
-    <span class="header-icon">🚀</span>
+    <span class="header-icon">*</span>
     <div>
       <h1>Commity</h1>
       <div class="subtitle">Review your commit before running</div>
@@ -484,7 +484,7 @@ export class CommitConfirmPanel {
       rows="2"
       spellcheck="false"
     >${commitMessageEscaped}</textarea>
-    <div class="edit-hint">✏️ You can edit the message above before running</div>
+    <div class="edit-hint">You can edit the message above before running</div>
   </div>
 
   <div class="label">Commands to Run</div>
@@ -506,10 +506,10 @@ export class CommitConfirmPanel {
       ▶ Run in Terminal
     </button>
     <button class="btn-secondary" onclick="copyCommands()">
-      📋 Copy Commands
+      Copy Commands
     </button>
     <button class="btn-secondary" onclick="regenerate()">
-      🔄 Regenerate
+      Regenerate
     </button>
     <button class="btn-danger" onclick="closePanel()">
       ✕ Close

@@ -24,6 +24,16 @@ export class UpdateService {
    * Runs silently in the background.
    */
   public async checkForUpdates(currentVersion: string): Promise<void> {
+    // Respect the user/build setting — Marketplace installs should not self-update
+    const enabled = vscode.workspace
+      .getConfiguration("commity")
+      .get<boolean>("enableAutoUpdater", true);
+
+    if (!enabled) {
+      logger.info("UpdateService: auto-updater is disabled (enableAutoUpdater=false).");
+      return;
+    }
+
     try {
       logger.info(`UpdateService: Checking for updates. Current version: ${currentVersion}`);
       const latestRelease = await this.fetchLatestRelease();

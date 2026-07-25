@@ -22,13 +22,13 @@
     "ai",
     "antigravity"
   ],
-  "homepage": "https://github.com/yourusername/commity",
+  "homepage": "https://github.com/egemngyk/commity",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/commity.git"
+    "url": "https://github.com/egemngyk/commity.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/commity/issues"
+    "url": "https://github.com/egemngyk/commity/issues"
   },
   "galleryBanner": {
     "color": "#1a1a2e",
@@ -165,6 +165,11 @@
           "default": "openrouter/auto",
           "description": "Model ID to use with OpenRouter. Default is 'openrouter/auto' which lets OpenRouter pick the best available model.",
           "markdownDescription": "Model to use via OpenRouter. Default `openrouter/auto` picks the best available option automatically. You can also specify any model ID from [openrouter.ai/models](https://openrouter.ai/models) e.g. `anthropic/claude-3.5-sonnet`, `openai/gpt-4o`, `google/gemini-pro`."
+        },
+        "commity.enableAutoUpdater": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically check for Commity updates from GitHub releases on startup. Disable this if you installed Commity from the VS Code Marketplace (updates are handled automatically there)."
         }
       }
     }
@@ -177,7 +182,7 @@
     "lint": "eslint src",
     "test": "vscode-test",
     "package": "vsce package",
-    "publish": "vsce publish"
+    "publish:ovsx": "ovsx publish"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
@@ -189,6 +194,7 @@
     "@vscode/test-electron": "^2.3.9",
     "@vscode/vsce": "^2.24.0",
     "eslint": "^8.56.0",
+    "ovsx": "^0.9.0",
     "typescript": "^5.3.3"
   },
   "dependencies": {}

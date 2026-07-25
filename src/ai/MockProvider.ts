@@ -53,19 +53,21 @@ export class MockProvider implements AIProvider {
         desc = desc.charAt(0).toLowerCase() + desc.slice(1);
       }
 
-      // If there are multiple tasks, append summary
+      // If there are multiple tasks, append them all nicely
       if (tasks.length > 1) {
-        // e.g. "implement user authentication and connect database"
-        const secondTask = tasks[1].title;
-        let secondDesc = secondTask;
-        if (/^[A-Z][a-z]/.test(secondDesc)) {
-          secondDesc = secondDesc.charAt(0).toLowerCase() + secondDesc.slice(1);
-        }
+        const descriptions = tasks.map(t => {
+          let tTitle = t.title;
+          if (/^[A-Z][a-z]/.test(tTitle)) {
+            tTitle = tTitle.charAt(0).toLowerCase() + tTitle.slice(1);
+          }
+          return tTitle;
+        });
         
-        if (tasks.length === 2) {
-          desc += ` and ${secondDesc}`;
+        if (descriptions.length === 2) {
+          desc = `${descriptions[0]} and ${descriptions[1]}`;
         } else {
-          desc += `, ${secondDesc} and ${tasks.length - 2} other task(s)`;
+          const last = descriptions.pop();
+          desc = `${descriptions.join(", ")} and ${last}`;
         }
       }
 

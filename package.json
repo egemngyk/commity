@@ -1,0 +1,181 @@
+{
+  "name": "commity",
+  "displayName": "Commity",
+  "description": "Automatically generate Conventional Commit messages by analyzing completed tasks in TASKS.md using AI.",
+  "version": "1.0.0",
+  "publisher": "commity",
+  "license": "MIT",
+  "icon": "icons/commity.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "AI",
+    "Other"
+  ],
+  "keywords": [
+    "git",
+    "commit",
+    "conventional commit",
+    "tasks",
+    "ai",
+    "antigravity"
+  ],
+  "homepage": "https://github.com/yourusername/commity",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/commity.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/commity/issues"
+  },
+  "galleryBanner": {
+    "color": "#1a1a2e",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "onCommand:commity.generateCommitMessage",
+    "onCommand:commity.copyCommitMessage",
+    "onCommand:commity.openSettings"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "commity.generateCommitMessage",
+        "title": "Commity: Generate Commit Message",
+        "icon": "$(git-commit)"
+      },
+      {
+        "command": "commity.copyCommitMessage",
+        "title": "Commity: Copy Commit Message",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "commity.openSettings",
+        "title": "Commity: Open Settings",
+        "icon": "$(settings-gear)"
+      }
+    ],
+    "menus": {
+      "scm/title": [
+        {
+          "command": "commity.generateCommitMessage",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "commity.generateCommitMessage"
+        },
+        {
+          "command": "commity.copyCommitMessage"
+        },
+        {
+          "command": "commity.openSettings"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Commity",
+      "properties": {
+        "commity.preferredProvider": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "chat",
+            "vscode-lm",
+            "openai",
+            "mock"
+          ],
+          "enumDescriptions": [
+            "Automatically select the best available provider",
+            "Use Antigravity / Copilot Chat panel (recommended)",
+            "Use VS Code built-in Language Model API",
+            "Use OpenAI-compatible HTTP API",
+            "Use mock provider (for development/testing)"
+          ],
+          "default": "auto",
+          "description": "Preferred AI provider for generating commit messages."
+        },
+        "commity.openaiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for OpenAI or any OpenAI-compatible service.",
+          "markdownDescription": "API key for OpenAI or any OpenAI-compatible endpoint. Also supports Ollama, LM Studio, etc."
+        },
+        "commity.openaiBaseUrl": {
+          "type": "string",
+          "default": "https://api.openai.com/v1",
+          "description": "Base URL for the OpenAI-compatible API endpoint.",
+          "markdownDescription": "Base URL for the API. Change this to use Ollama (`http://localhost:11434/v1`), LM Studio, or other compatible services."
+        },
+        "commity.model": {
+          "type": "string",
+          "default": "gpt-4o",
+          "description": "Model name to use when calling OpenAI-compatible API."
+        },
+        "commity.temperature": {
+          "type": "number",
+          "default": 0.3,
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Sampling temperature for the AI model (0 = deterministic, 2 = very creative)."
+        },
+        "commity.conventionalCommitStyle": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enforce Conventional Commit format (feat/fix/refactor/etc.)."
+        },
+        "commity.promptTemplate": {
+          "type": "string",
+          "default": "",
+          "description": "Custom prompt template. Use {tasks} as placeholder for the task list. Leave empty to use the default template.",
+          "markdownDescription": "Custom prompt template. Use `{tasks}` as a placeholder for the completed task list. Leave empty to use the built-in template."
+        },
+        "commity.preferredTasksFilename": {
+          "type": "string",
+          "default": "",
+          "description": "Preferred tasks file name to use (e.g. TASKS.md). Leave empty to auto-detect.",
+          "markdownDescription": "Preferred tasks file name (e.g. `TASKS.md`). If empty, Commity searches for `TASKS.md`, `tasks.md`, `Todo.md`, `TODO.md`."
+        },
+        "commity.autoCopy": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically copy the generated commit message to clipboard."
+        },
+        "commity.maxRetries": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Maximum number of retries when AI response is invalid."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vscode/test-cli": "^0.0.6",
+    "@vscode/test-electron": "^2.3.9",
+    "@vscode/vsce": "^2.24.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {}
+}

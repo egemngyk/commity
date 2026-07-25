@@ -23,6 +23,28 @@ export class TaskDiffAnalyzer {
   }
 
   /**
+   * Parse all completed tasks from raw TASKS.md file content.
+   * Useful when there is no HEAD commit or the tasks file is not in HEAD yet.
+   */
+  public analyzeRawContent(content: string): CompletedTask[] {
+    const lines = content.split(/\r?\n/);
+    const completedTasks: CompletedTask[] = [];
+    const fileCompletedTaskRegex = /^\s*-\s*\[x\]\s+(.+)$/i;
+
+    for (const line of lines) {
+      const match = fileCompletedTaskRegex.exec(line);
+      if (match) {
+        completedTasks.push({
+          title: match[1].trim(),
+          rawLine: line,
+        });
+      }
+    }
+
+    return completedTasks;
+  }
+
+  /**
    * Format a human-readable summary of the completed tasks.
    */
   public formatSummary(tasks: CompletedTask[]): string {

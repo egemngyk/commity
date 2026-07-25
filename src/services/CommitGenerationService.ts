@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import * as fs from "fs";
 import type { AIProviderConfig } from "../models/AIProviderConfig.js";
 import type { CompletedTask } from "../models/CompletedTask.js";
 import type { AIProvider } from "../ai/AIProvider.js";
@@ -30,7 +31,7 @@ export type GenerationResult = DirectGenerationResult | ChatGenerationResult;
  * Orchestrates the full commit message generation workflow:
  * 1. Detect git repository
  * 2. Locate TASKS.md
- * 3. Get git diff (HEAD vs working tree)
+ * 3. Get git diff (HEAD vs working tree) or parse raw content if first commit
  * 4. Parse completed tasks
  * 5. Select AI provider
  * 6. Generate + validate commit message
@@ -49,12 +50,16 @@ export class CommitGenerationService {
     const repoRoot = await this.gitService.getRepoRoot();
     logger.info(`Repository root: ${repoRoot}`);
 
-    // Check for detached HEAD
-    const isDetached = await this.gitService.isDetachedHead(repoRoot);
-    if (isDetached) {
-      throw new Error(
-        "Repository is in detached HEAD state. Please checkout a branch before committing."
-      );
+    const hasCommits = await this.gitService.hasCommits(repoRoot);
+
+    if (hasCommits) {
+      // Check for detached HEAD
+      const isDetached = await this.gitService.isDetachedHead(repoRoot);
+      if (isDetached) {
+        throw new Error(
+          "Repository is in detached HEAD state. Please checkout a branch before committing."
+        );
+      }
     }
 
     // ── Step 2: Locate TASKS.md ────────────────────────────────────
@@ -64,32 +69,57 @@ export class CommitGenerationService {
     );
     logger.info(`Tasks file: ${tasksFilePath}`);
 
-    // ── Step 3: Get git diff ───────────────────────────────────────
-    const diffResult = await this.gitService.getDiffAgainstHead(
-      repoRoot,
-      tasksFilePath
-    );
+    let completedTasks: CompletedTask[] = [];
 
-    if (!diffResult.diff.trim()) {
-      throw new Error(
-        `No changes detected in "${diffResult.relativeTasksPath}" compared to HEAD.\n\n` +
-          "Make sure you have checked off some tasks (changed [ ] to [x]) and that the file has been modified."
+    // ── Step 3: Check if we can do a diff vs HEAD ──────────────────
+    const fileExistsInHead = hasCommits && await this.gitService.fileExistsInHead(repoRoot, tasksFilePath);
+
+    if (!hasCommits || !fileExistsInHead) {
+      logger.info(
+        `Repository has no commits or tasks file does not exist in HEAD yet. Reading raw file contents directly.`
       );
+      try {
+        const content = await fs.promises.readFile(tasksFilePath, "utf8");
+        completedTasks = this.taskAnalyzer.analyzeRawContent(content);
+      } catch (err) {
+        logger.error(`Failed to read tasks file: ${tasksFilePath}`, err);
+        throw new Error(`Failed to read tasks file from disk at "${tasksFilePath}".`);
+      }
+    } else {
+      // Regular diff comparison against HEAD
+      const diffResult = await this.gitService.getDiffAgainstHead(
+        repoRoot,
+        tasksFilePath
+      );
+
+      if (!diffResult.diff.trim()) {
+        throw new Error(
+          `No changes detected in "${diffResult.relativeTasksPath}" compared to HEAD.\n\n` +
+            "Make sure you have checked off some tasks (changed [ ] to [x]) and that the file has been modified."
+        );
+      }
+
+      logger.debug(`Diff length: ${diffResult.diff.length} chars`);
+      completedTasks = this.taskAnalyzer.analyze(diffResult.diff);
     }
 
-    logger.debug(`Diff length: ${diffResult.diff.length} chars`);
-
-    // ── Step 4: Parse completed tasks ─────────────────────────────
-    const completedTasks = this.taskAnalyzer.analyze(diffResult.diff);
+    // ── Step 4: Parse completed tasks summary ──────────────────────
     logger.info(`Completed tasks found: ${completedTasks.length}`);
     logger.info(this.taskAnalyzer.formatSummary(completedTasks));
 
     if (completedTasks.length === 0) {
-      throw new Error(
-        "No completed tasks detected in the diff.\n\n" +
-          "Commity only detects tasks that changed from [ ] (unchecked) to [x] (checked). " +
-          "New tasks, deleted tasks, and modified descriptions are ignored."
-      );
+      if (!hasCommits || !fileExistsInHead) {
+        throw new Error(
+          "No completed tasks detected in your tasks file.\n\n" +
+            "Since this is the first commit or the file is new, make sure there is at least one checked task: - [x] Task Title"
+        );
+      } else {
+        throw new Error(
+          "No completed tasks detected in the diff.\n\n" +
+            "Commity only detects tasks that changed from [ ] (unchecked) to [x] (checked). " +
+            "New tasks, deleted tasks, and modified descriptions are ignored."
+        );
+      }
     }
 
     // ── Step 5: Select AI provider ─────────────────────────────────

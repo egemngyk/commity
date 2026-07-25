@@ -60,6 +60,38 @@ export class GitService {
   }
 
   /**
+   * Checks if the git repository has at least one commit.
+   */
+  public async hasCommits(repoRoot: string): Promise<boolean> {
+    try {
+      await execAsync("git rev-parse --verify HEAD", { cwd: repoRoot });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Checks if a file exists in the HEAD commit.
+   */
+  public async fileExistsInHead(
+    repoRoot: string,
+    absoluteFilePath: string
+  ): Promise<boolean> {
+    const relativeTasksPath = absoluteFilePath
+      .replace(repoRoot, "")
+      .replace(/^[/\\]/, "");
+    try {
+      await execAsync(`git cat-file -e HEAD:"${relativeTasksPath}"`, {
+        cwd: repoRoot,
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Gets the git diff for a specific file compared to HEAD.
    * Equivalent to: git diff HEAD -- <filePath>
    */

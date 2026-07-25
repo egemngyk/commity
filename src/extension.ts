@@ -4,6 +4,7 @@ import * as path from "path";
 import { registerGenerateCommitCommand } from "./commands/generateCommitCommand.js";
 import { registerCopyCommitCommand } from "./commands/copyCommitCommand.js";
 import { registerOpenSettingsCommand } from "./commands/openSettingsCommand.js";
+import { UpdateService } from "./services/UpdateService.js";
 import { logger } from "./utils/logger.js";
 
 /**
@@ -15,6 +16,11 @@ import { logger } from "./utils/logger.js";
 export function activate(context: vscode.ExtensionContext): void {
   logger.info("Commity extension activated");
   logger.info(`Extension path: ${context.extensionUri.fsPath}`);
+
+  // Check for updates asynchronously from GitHub releases
+  const currentVersion = context.extension.packageJSON.version;
+  const updater = new UpdateService();
+  void updater.checkForUpdates(currentVersion);
 
   // Register all commands
   context.subscriptions.push(

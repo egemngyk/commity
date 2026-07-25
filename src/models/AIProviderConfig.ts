@@ -11,4 +11,7 @@ export interface AIProviderConfig {
   maxRetries: number;
   conventionalCommitStyle: boolean;
   promptTemplate: string;
+  preferredTasksFilename: string;
+  autoCopy: boolean;
 }
+

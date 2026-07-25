@@ -87,6 +87,7 @@
             "chat",
             "vscode-lm",
             "openai",
+            "web-free",
             "mock"
           ],
           "enumDescriptions": [
@@ -94,6 +95,7 @@
             "Use Antigravity / Copilot Chat panel (recommended)",
             "Use VS Code built-in Language Model API",
             "Use OpenAI-compatible HTTP API",
+            "Use free Web AI without login (GPT-4o-mini, Claude, Llama 3 via DuckDuckGo)",
             "Use mock provider (for development/testing)"
           ],
           "default": "auto",
@@ -151,6 +153,23 @@
           "minimum": 1,
           "maximum": 10,
           "description": "Maximum number of retries when AI response is invalid."
+        },
+        "commity.webFreeModel": {
+          "type": "string",
+          "enum": [
+            "gpt-4o-mini",
+            "claude-3-haiku",
+            "meta-llama/Llama-3-70b-instruct",
+            "mistralai/Mixtral-8x7B-Instruct-v0.1"
+          ],
+          "enumDescriptions": [
+            "GPT-4o-mini (OpenAI / ChatGPT)",
+            "Claude 3 Haiku (Anthropic)",
+            "Llama 3 70B (Meta)",
+            "Mixtral 8x7B (Mistral)"
+          ],
+          "default": "gpt-4o-mini",
+          "description": "Which free Web AI model to use when using web-free provider."
         }
       }
     }

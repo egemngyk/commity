@@ -202,5 +202,10 @@
   "git.antigravityGetRemoteUrl",
   "antigravity.cancelLogin",
   "antigravity.handleAuthRefresh",
-  "antigravity.onShellCommandCompletion"
+  "antigravity.onShellCommandCompletion",
+  "workbench.action.output.show.google.antigravity.Antigravity IDE",
+  "workbench.action.output.show.google.antigravity.Antigravity Crash Logs",
+  "antigravity.onManagerTerminalCommandStart",
+  "antigravity.onManagerTerminalCommandData",
+  "antigravity.onManagerTerminalCommandFinish"
 ]

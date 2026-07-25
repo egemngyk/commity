@@ -30,6 +30,7 @@ function readConfig(): AIProviderConfig {
     preferredTasksFilename: cfg.get<string>("preferredTasksFilename", ""),
     autoCopy: cfg.get<boolean>("autoCopy", false),
     maxRetries: cfg.get<number>("maxRetries", 3),
+    webFreeModel: cfg.get<string>("webFreeModel", "gpt-4o-mini"),
   };
 }
 

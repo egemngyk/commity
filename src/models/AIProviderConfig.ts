@@ -1,5 +1,5 @@
 /** Available AI provider identifiers */
-export type AIProviderType = "auto" | "chat" | "vscode-lm" | "openai" | "mock";
+export type AIProviderType = "auto" | "chat" | "vscode-lm" | "openai" | "web-free" | "mock";
 
 /** Configuration for AI providers */
 export interface AIProviderConfig {
@@ -13,5 +13,6 @@ export interface AIProviderConfig {
   promptTemplate: string;
   preferredTasksFilename: string;
   autoCopy: boolean;
+  webFreeModel: string;
 }
 

@@ -2,7 +2,7 @@
 
 > 🤖 VS Code extension that analyzes your TASKS.md git diff and auto-generates Conventional Commit messages via AI — works with Antigravity IDE, GitHub Copilot, and OpenAI-compatible APIs.
 
-🇹🇷 **Türkçe dökümantasyon için [README.tr.md](file:///home/egemen/data/yazilim/node/commity/README.tr.md) dosyasına göz atabilirsiniz.**
+🇹🇷 **Türkçe dökümantasyon için [README.tr.md](./README.tr.md) dosyasına göz atabilirsiniz.**
 
 ![Commity Icon](icons/commity.png)
 

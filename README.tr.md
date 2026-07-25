@@ -2,7 +2,7 @@
 
 > 🤖 `TASKS.md` üzerindeki git diff analizini yaparak tamamlanan görevlerden otomatik olarak Conventional Commit (Kurallı Commit) mesajları üreten VS Code ve Antigravity IDE uyumlu yapay zeka destekli eklenti.
 
-🇬🇧 **For English documentation, please see [README.md](file:///home/egemen/data/yazilim/node/commity/README.md).**
+🇬🇧 **For English documentation, please see [README.md](./README.md).**
 
 ![Commity İkonu](icons/commity.png)
 

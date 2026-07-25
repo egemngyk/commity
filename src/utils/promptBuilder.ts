@@ -2,9 +2,11 @@ import type { CompletedTask } from "../models/CompletedTask.js";
 
 const DEFAULT_TEMPLATE_CHAT = `You are a Git expert. Based on the following completed tasks, generate EXACTLY ONE Conventional Commit message.
 
-IMPORTANT: Reply with ONLY these two lines, nothing else, no markdown, no explanations:
+IMPORTANT: Your response must consist ONLY of a bash code block containing these exact git commands, with no other text, no markdown outside the code block, and no explanations:
+\`\`\`bash
 git add .
 git commit -m "type(scope): short description"
+\`\`\`
 
 Where type is one of: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
 

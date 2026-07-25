@@ -5,6 +5,18 @@ All notable changes to **Commity** will be documented in this file.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-07-26
+
+### Fixed
+- Fixed extension ID filter query in settings command to avoid "No settings found" error
+
+## [1.0.2] - 2026-07-26
+
+### Changed
+- Changed publisher ID to `egemngyk` in package configuration
+- Prepared GitHub Actions pipeline to publish to OpenVSX and GitHub Releases simultaneously
+- Fixed `.vscodeignore` to allow packing compiled JS assets in build targets
+
 ## [1.0.1] - 2026-07-26
 
 ### Added

@@ -126,6 +126,26 @@ export class CommitGenerationService {
     const factory = new AIProviderFactory(config);
     const provider: AIProvider = await factory.resolve();
 
+    const ideName = vscode.env.appName;
+    const isAntigravity = ideName.toLowerCase().includes("antigravity");
+    const agentName = isAntigravity ? "Antigravity AI Agent" : "GitHub Copilot Chat";
+
+    if (config.preferredProvider === "chat") {
+      if (provider.name.includes("Chat")) {
+        void vscode.window.showInformationMessage(`Commity: Chat panel detected! Active agent: ${agentName}`);
+      } else {
+        void vscode.window.showWarningMessage(
+          `Commity: Preferred Chat panel could not be detected. Falling back to: ${provider.name}. ` +
+            `Make sure ${agentName} is installed and logged in.`
+        );
+      }
+    } else if (provider.name.includes("Mock")) {
+      void vscode.window.showWarningMessage(
+        "Commity: No active AI providers (Chat panel, vscode.lm, or OpenAI API) were detected. " +
+          "Running in Test/Mock mode. Please check Commity settings."
+      );
+    }
+
     // ── Step 6: Generate commit message ────────────────────────────
     const result = await this.generateWithRetry(
       provider,

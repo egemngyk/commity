@@ -10,7 +10,7 @@ export function registerOpenSettingsCommand(): vscode.Disposable {
     logger.info("openSettingsCommand: opening Commity settings");
     await vscode.commands.executeCommand(
       "workbench.action.openSettings",
-      "@ext:commity.commity"
+      "@ext:egemngyk.commity"
     );
   });
 }

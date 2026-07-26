@@ -5,6 +5,12 @@ All notable changes to **Commity** will be documented in this file.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-07-26
+
+### Added
+- **Smart Hybrid Detection**: Commity now simultaneously checks both completed tasks in `TASKS.md` AND active code diffs in Git repository files.
+- Combined AI prompt generation: If both task list items and code changes exist, both are sent to the AI for complete context. If only code diffs exist (even when `TASKS.md` hasn't changed), code diffs are seamlessly processed.
+
 ## [1.0.4] - 2026-07-26
 
 ### Changed

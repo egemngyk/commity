@@ -2,7 +2,7 @@
   "name": "commity",
   "displayName": "Commity",
   "description": "Automatically generate Conventional Commit messages by analyzing completed tasks in TASKS.md using AI.",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "publisher": "egemngyk",
   "license": "MIT",
   "icon": "icons/commity.png",

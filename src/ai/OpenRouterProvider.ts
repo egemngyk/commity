@@ -4,7 +4,7 @@ import type { AIGenerationResult, AIProvider } from "./AIProvider.js";
 import type { CompletedTask } from "../models/CompletedTask.js";
 import type { FileDiff } from "../git/GitService.js";
 import type { AIProviderConfig } from "../models/AIProviderConfig.js";
-import { buildDirectPrompt, buildDiffDirectPrompt } from "../utils/promptBuilder.js";
+import { buildDirectPrompt, buildDiffDirectPrompt, buildSmartDirectPrompt } from "../utils/promptBuilder.js";
 import { logger } from "../utils/logger.js";
 
 // Force IPv4 to avoid IPv6 connectivity issues in some environments
@@ -54,6 +54,16 @@ export class OpenRouterProvider implements AIProvider {
     customTemplate?: string
   ): Promise<AIGenerationResult> {
     const prompt = buildDiffDirectPrompt(fileDiffs, customTemplate);
+    return this.callApi(prompt);
+  }
+
+  public async generateSmart(
+    tasks: CompletedTask[],
+    fileDiffs: FileDiff[],
+    conventionalStyle: boolean,
+    customTemplate?: string
+  ): Promise<AIGenerationResult> {
+    const prompt = buildSmartDirectPrompt(tasks, fileDiffs, conventionalStyle, customTemplate);
     return this.callApi(prompt);
   }
 

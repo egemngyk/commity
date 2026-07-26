@@ -60,6 +60,16 @@ export interface AIProvider {
     conventionalStyle: boolean,
     customTemplate?: string
   ): Promise<AIGenerationResult>;
+
+  /**
+   * Smartly generate a commit message using both completed tasks and code diffs.
+   */
+  generateSmart?(
+    tasks: CompletedTask[],
+    fileDiffs: FileDiff[],
+    conventionalStyle: boolean,
+    customTemplate?: string
+  ): Promise<AIGenerationResult>;
 }
 
 /**
@@ -68,3 +78,4 @@ export interface AIProvider {
 export function logProviderSelection(provider: AIProvider): void {
   logger.info(`Using AI provider: ${provider.name}`);
 }
+

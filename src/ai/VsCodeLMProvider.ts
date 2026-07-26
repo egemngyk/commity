@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import type { AIGenerationResult, AIProvider } from "./AIProvider.js";
 import type { CompletedTask } from "../models/CompletedTask.js";
 import type { FileDiff } from "../git/GitService.js";
-import { buildDirectPrompt, buildDiffDirectPrompt } from "../utils/promptBuilder.js";
+import { buildDirectPrompt, buildDiffDirectPrompt, buildSmartDirectPrompt } from "../utils/promptBuilder.js";
 import { logger } from "../utils/logger.js";
 
 /**
@@ -53,6 +53,16 @@ export class VsCodeLMProvider implements AIProvider {
     customTemplate?: string
   ): Promise<AIGenerationResult> {
     const prompt = buildDiffDirectPrompt(fileDiffs, customTemplate);
+    return this.callLM(prompt);
+  }
+
+  public async generateSmart(
+    tasks: CompletedTask[],
+    fileDiffs: FileDiff[],
+    conventionalStyle: boolean,
+    customTemplate?: string
+  ): Promise<AIGenerationResult> {
+    const prompt = buildSmartDirectPrompt(tasks, fileDiffs, conventionalStyle, customTemplate);
     return this.callLM(prompt);
   }
 

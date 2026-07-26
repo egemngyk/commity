@@ -110,5 +110,17 @@ export class MockProvider implements AIProvider {
     
     return { mode: "direct", commitMessage };
   }
+
+  public async generateSmart(
+    tasks: CompletedTask[],
+    fileDiffs: FileDiff[],
+    conventionalStyle: boolean,
+    customTemplate?: string
+  ): Promise<AIGenerationResult> {
+    if (tasks.length > 0) {
+      return this.generate(tasks, conventionalStyle, customTemplate);
+    }
+    return this.generateFromDiff(fileDiffs, conventionalStyle, customTemplate);
+  }
 }
 

@@ -5,7 +5,7 @@ import type { AIGenerationResult, AIProvider } from "./AIProvider.js";
 import type { CompletedTask } from "../models/CompletedTask.js";
 import type { FileDiff } from "../git/GitService.js";
 import type { AIProviderConfig } from "../models/AIProviderConfig.js";
-import { buildDirectPrompt, buildDiffDirectPrompt } from "../utils/promptBuilder.js";
+import { buildDirectPrompt, buildDiffDirectPrompt, buildSmartDirectPrompt } from "../utils/promptBuilder.js";
 import { logger } from "../utils/logger.js";
 
 interface OpenAIMessage {
@@ -70,6 +70,19 @@ export class OpenAICompatibleProvider implements AIProvider {
     const prompt = buildDiffDirectPrompt(fileDiffs, customTemplate);
     logger.info(
       `OpenAICompatibleProvider (diff mode): calling ${this.config.openaiBaseUrl} with model ${this.config.model}`
+    );
+    return this.callApi(prompt);
+  }
+
+  public async generateSmart(
+    tasks: CompletedTask[],
+    fileDiffs: FileDiff[],
+    conventionalStyle: boolean,
+    customTemplate?: string
+  ): Promise<AIGenerationResult> {
+    const prompt = buildSmartDirectPrompt(tasks, fileDiffs, conventionalStyle, customTemplate);
+    logger.info(
+      `OpenAICompatibleProvider (smart mode): calling ${this.config.openaiBaseUrl} with model ${this.config.model}`
     );
     return this.callApi(prompt);
   }

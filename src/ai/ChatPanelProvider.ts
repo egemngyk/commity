@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import type { AIGenerationResult, AIProvider } from "./AIProvider.js";
 import type { CompletedTask } from "../models/CompletedTask.js";
 import type { FileDiff } from "../git/GitService.js";
-import { buildChatPanelPrompt, buildDiffChatPrompt } from "../utils/promptBuilder.js";
+import { buildChatPanelPrompt, buildDiffChatPrompt, buildSmartChatPrompt } from "../utils/promptBuilder.js";
 import { logger } from "../utils/logger.js";
 
 /** Standard VS Code chat open command */
@@ -58,6 +58,16 @@ export class ChatPanelProvider implements AIProvider {
     customTemplate?: string
   ): Promise<AIGenerationResult> {
     const prompt = buildDiffChatPrompt(fileDiffs, customTemplate);
+    return this.sendPrompt(prompt);
+  }
+
+  public async generateSmart(
+    tasks: CompletedTask[],
+    fileDiffs: FileDiff[],
+    _conventionalStyle: boolean,
+    customTemplate?: string
+  ): Promise<AIGenerationResult> {
+    const prompt = buildSmartChatPrompt(tasks, fileDiffs, customTemplate);
     return this.sendPrompt(prompt);
   }
 

@@ -51,6 +51,30 @@ Rules:
 Changed files and their diffs:
 {diff}`;
 
+const HYBRID_TEMPLATE_CHAT = `You are a Git expert. Based on the completed tasks and code changes (git diff), generate EXACTLY ONE Conventional Commit message.
+
+IMPORTANT: Your response must consist ONLY of a bash code block containing these exact git commands, with no other text, no markdown outside the code block, and no explanations:
+\`\`\`bash
+git add .
+git commit -m "type(scope): short description"
+\`\`\`
+
+Where type is one of: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+
+{context}`;
+
+const HYBRID_TEMPLATE_DIRECT = `You are a Git expert. Based on the completed tasks and code changes (git diff), generate EXACTLY ONE Conventional Commit message.
+
+Rules:
+- Output ONLY the commit message string. No markdown. No explanations. No quotes. No code block.
+- Use Conventional Commit format: type(scope): description
+- Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+- Keep it under 72 characters
+- Use imperative mood (implement, add, fix — not implemented, added, fixed)
+
+{context}`;
+
+
 /**
  * Builds the AI prompt for the Chat Panel provider.
  * Instructs the AI to respond with the two-line git command format.
@@ -110,6 +134,53 @@ export function buildDiffDirectPrompt(
   const template = customTemplate?.trim() ? customTemplate : DIFF_TEMPLATE_DIRECT;
   return template.replace("{diff}", diffBlock);
 }
+
+/**
+ * Builds a smart combined prompt containing both completed tasks (if any)
+ * and file diffs (if any).
+ */
+export function buildSmartChatPrompt(
+  tasks: CompletedTask[],
+  fileDiffs: FileDiff[],
+  customTemplate?: string
+): string {
+  const context = formatSmartContext(tasks, fileDiffs);
+  if (customTemplate?.trim()) {
+    return customTemplate.replace("{tasks}", tasks.map(t => `- ${t.title}`).join("\n")).replace("{diff}", formatFileDiffsForPrompt(fileDiffs)).replace("{context}", context);
+  }
+  return HYBRID_TEMPLATE_CHAT.replace("{context}", context);
+}
+
+/**
+ * Builds a smart combined prompt for direct providers containing both completed tasks (if any)
+ * and file diffs (if any).
+ */
+export function buildSmartDirectPrompt(
+  tasks: CompletedTask[],
+  fileDiffs: FileDiff[],
+  _conventionalStyle: boolean,
+  customTemplate?: string
+): string {
+  const context = formatSmartContext(tasks, fileDiffs);
+  if (customTemplate?.trim()) {
+    return customTemplate.replace("{tasks}", tasks.map(t => `- ${t.title}`).join("\n")).replace("{diff}", formatFileDiffsForPrompt(fileDiffs)).replace("{context}", context);
+  }
+  return HYBRID_TEMPLATE_DIRECT.replace("{context}", context);
+}
+
+function formatSmartContext(tasks: CompletedTask[], fileDiffs: FileDiff[]): string {
+  const parts: string[] = [];
+  if (tasks.length > 0) {
+    const taskList = tasks.map((t) => `- ${t.title}`).join("\n");
+    parts.push(`Completed tasks from task list:\n${taskList}`);
+  }
+  if (fileDiffs.length > 0) {
+    const diffBlock = formatFileDiffsForPrompt(fileDiffs);
+    parts.push(`Code changes (git diff):\n${diffBlock}`);
+  }
+  return parts.join("\n\n");
+}
+
 
 /**
  * Formats an array of FileDiff objects into a readable block for the AI prompt.
